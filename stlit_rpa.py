@@ -42,22 +42,37 @@ if uploaded_file is not None:
     if filename.endswith('.csv'):
         dataframe = pd.read_csv(uploaded_file)
         #dataframe = upload_data(uploaded_file)
+    df = ru.resample(dataframe,num=200)
     if st.checkbox('Show raw data'):
         st.subheader('Raw data')
         st.write(dataframe)
 
-    st.subheader('Filter Temperature Limits')
+    st.subheader('Set Temperature Limits for Model')
 
     # Some number in the range 0-23
     #lower_temp = st.slider('lower', float(dataframe.tempc.min()),float(upper_temp) , lower_temp)
-    lower_t,upper_t = st.slider('Temperature Limits for Fitting', value=[float(dataframe.tempc.min()),float(dataframe.tempc.max())] )
+    #upper_t=upper_temp
+    col1,col2 = st.columns(2)
+    lower_t = col1.number_input('Lower Limit',value=lower_temp,
+                    min_value=dataframe.tempc.min(),
+                    max_value=dataframe.tempc.max(),step=1.,format='%.1f')
+    #col1.write('The current number is ', lower_t)  
+    upper_t = col2.number_input('Upper Limit',value=upper_temp,
+                        max_value=dataframe.tempc.max(),
+                        min_value=lower_t,step=1.,format='%.1f')                      
+    #col2.write('The current number is ', upper_t)  
+
+    # no function
+    #tl,tu = st.slider('Temperature Limits for Fitting', value=[lower_t,upper_t],step=1. )
     #st.subheader('Data Measured and Filtered')
 
     # call to api 
     model = ru.fit_visco(dataframe,lower_t,upper_t)
     
-    fig = ru.plotly_fig(dataframe,lower_t,upper_t,model=model)
-    st.plotly_chart(fig,use_container_width=True)
+    if st.checkbox('Show Plot (slows down!)'):
+        st.subheader('Plot Data')
+        fig = ru.plotly_fig(df,lower_t,upper_t,model=model)
+        st.plotly_chart(fig,use_container_width=True)
     st.write(model)
     with open('model.txt','w') as fo:
         modelstr=json.dumps(model)

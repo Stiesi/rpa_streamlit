@@ -45,8 +45,9 @@ def plotly_fig(data,lowert=80,uppert=140,model=None):
                                 len=0.5),
                                 colorscale=myscale,
                                 opacity=data.use,
+                                symbol='diamond-dot',
                                 line=dict(
-                                    color='MediumPurple',
+                                    color='Black',
                                     width=0.5,
                                     )))
         traces.append(trace)
@@ -169,7 +170,7 @@ def resample(df,num=20):
     return df.loc[ixi]
 
 if __name__=='__main__':
-    #test_plotly_fig(show=False)
+    test_plotly_fig(show=True)
     df,ref=test_fit_visco()
-    dfsamp=resample(df)
+    dfsamp=resample(df,num=20)
     print(dfsamp.to_json())
