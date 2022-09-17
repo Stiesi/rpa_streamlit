@@ -1,0 +1,1 @@
+{'fit_parameter': {'A': 835.9979707299541, 'C': 1666.8287301629769, 'n': 0.2841424416704478, 'pp': 1, 'lower T[C]': 80, 'upper T[C]': 140}, 'flow function': 'log(n_star) = log(A) + C * (1/temperature[K]) + (n-1)* log(gammad[rad/s])'}
