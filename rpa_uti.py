@@ -1,10 +1,12 @@
+import json
 import os
 import pandas as pd
 import numpy as np
 import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.graph_objects as go
-from scipy.optimize import leastsq
+#from scipy.optimize import leastsq
+import requests
 
 def plotly_fig(data,lowert=80,uppert=140,model=None):
 
@@ -29,7 +31,8 @@ def plotly_fig(data,lowert=80,uppert=140,model=None):
                 marker=dict(color=data.gammap,
                             colorscale=myscale,
                             opacity=data.use))]
-    if  model is not None:
+    if  model not in [{},None]:
+        print(model)
         A = model['A']
         C = model['C']
         n = model['n']
@@ -114,6 +117,34 @@ def synchronize(sdash,nstar,temp,testid=1,trigger=0):
     dataset =np.vstack((time,sda,nda,tempc,trate,testnr))
     return dataset.reshape(6,-1).T
 
+    
+def call_fit(df,lowert=80,uppert=140):
+
+    
+    base_url = f"https://cljbb2ponzjy24nlmvc4ogobiq0xjphl.lambda-url.eu-central-1.on.aws/visco?lowert={lowert}&uppert={uppert}"
+    #base_url = f"https://localhost:8000/visco"#?lowert={lowert}&uppert={uppert}"
+    
+    print(base_url)
+    params = dict()
+    params["lowert"] = lowert
+    params["uppert"] = uppert
+    body = dict()
+    body["gammap"] = df.gammap.values.tolist()
+    body["tempc"] = df.tempc.values.tolist()
+    body["nstar"] = df.nstar.values.tolist()
+    
+    try:
+        r = requests.post(base_url, params=params, json=body) 
+        #rr = r.content.decode()    # is binary
+        rr = json.loads(r.content.decode())
+    except:
+        dj = json.dumps(body)
+        print (dj)
+        rr={}
+
+    return rr
+    
+    
 def fit_visco(df,lowert=80,uppert=140):
     dfs=df.loc[(df.tempc<=uppert)&(df.tempc>=lowert)]
 
@@ -170,7 +201,10 @@ def resample(df,num=20):
     return df.loc[ixi]
 
 if __name__=='__main__':
-    test_plotly_fig(show=True)
+    #test_plotly_fig(show=True)
     df,ref=test_fit_visco()
     dfsamp=resample(df,num=20)
     print(dfsamp.to_json())
+    rd = call_fit(dfsamp)
+    
+    print(rd)

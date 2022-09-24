@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 import rpa_uti as ru
 import json
 from io import BytesIO
@@ -67,7 +68,8 @@ if uploaded_file is not None:
     #st.subheader('Data Measured and Filtered')
 
     # call to api 
-    model = ru.fit_visco(dataframe,lower_t,upper_t)
+    #model = ru.fit_visco(dataframe,lower_t,upper_t)
+    model = ru.call_fit(dataframe,lower_t,upper_t)
     
     if st.checkbox('Show Plot (slows down!)'):
         st.subheader('Plot Data')
