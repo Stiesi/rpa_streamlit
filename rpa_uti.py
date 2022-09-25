@@ -11,7 +11,7 @@ import requests
 def plotly_fig(data,lowert=80,uppert=140,model=None):
 
     data['log_nstar']=np.log(data.nstar)
-    data['use']=np.where((data.tempc>=lowert)&(data.tempc<=uppert),0.3,0.02)
+    data['use']=np.where((data.tempc>=lowert)&(data.tempc<=uppert),0.4,0.05)
     
     #fig = px.scatter(data,x='tempc',y='log_nstar',color='gammap')#,size='hrate')
     #fig.update_traces(marker={'size':100})
@@ -31,8 +31,7 @@ def plotly_fig(data,lowert=80,uppert=140,model=None):
                 marker=dict(color=data.gammap,
                             colorscale=myscale,
                             opacity=data.use))]
-    if  model not in [{},None]:
-        print(model)
+    try:        
         A = model['A']
         C = model['C']
         n = model['n']
@@ -51,9 +50,12 @@ def plotly_fig(data,lowert=80,uppert=140,model=None):
                                 symbol='diamond-dot',
                                 line=dict(
                                     color='Black',
-                                    width=0.5,
+                                    width=0.9,
                                     )))
         traces.append(trace)
+    except:
+        print(model)
+        #print('No Api Key? : Contact...')
 
     layout=go.Layout(
     #fig.update_layout(
@@ -118,11 +120,12 @@ def synchronize(sdash,nstar,temp,testid=1,trigger=0):
     return dataset.reshape(6,-1).T
 
     
-def call_fit(df,lowert=80,uppert=140):
+def call_fit_visco(df,lowert=80,uppert=140,apikey=''):
 
     
-    base_url = f"https://cljbb2ponzjy24nlmvc4ogobiq0xjphl.lambda-url.eu-central-1.on.aws/visco?lowert={lowert}&uppert={uppert}"
+    #base_url = f"https://cljbb2ponzjy24nlmvc4ogobiq0xjphl.lambda-url.eu-central-1.on.aws/visco"#?lowert={lowert}&uppert={uppert}"
     #base_url = f"https://localhost:8000/visco"#?lowert={lowert}&uppert={uppert}"
+    base_url = f"https://pmwanmnatc.execute-api.eu-central-1.amazonaws.com/dev/visco"
     
     print(base_url)
     params = dict()
@@ -132,58 +135,31 @@ def call_fit(df,lowert=80,uppert=140):
     body["gammap"] = df.gammap.values.tolist()
     body["tempc"] = df.tempc.values.tolist()
     body["nstar"] = df.nstar.values.tolist()
+    headers=dict()
+    headers['x-api-key']=apikey
     
     try:
-        r = requests.post(base_url, params=params, json=body) 
+        r = requests.post(base_url, params=params, json=body,headers=headers) 
         #rr = r.content.decode()    # is binary
         rr = json.loads(r.content.decode())
     except:
+        print( 'Error in request response with body:')
         dj = json.dumps(body)
         print (dj)
         rr={}
 
     return rr
-    
-    
-def fit_visco(df,lowert=80,uppert=140):
-    dfs=df.loc[(df.tempc<=uppert)&(df.tempc>=lowert)]
 
-          
-    p0=[300,1936,0.297]
-    x=np.log(dfs.gammap.values)
-    y=1./(dfs.tempc.values+273.15)
-    z=np.log(dfs.nstar.values)
-    #z=dfs.nstar.values
-    
-    full_output=0    
-    result = leastsq(f_visco,p0,args=(x,y,z),full_output=full_output)
-    if full_output!=0:
-        print(result)
-    A,C,nexp=result[0]
-    pp=result[-1]
-        
-    #print(A,C,n,pp)
-    return {'A':A,'C':C,'n':nexp,'pp':pp,'lower T[C]':lowert,'upper T[C]':uppert}
-
-def viscosity(loggammap,tki,A,C,n):
-    return A + C*tki + (n-1)*loggammap
 
 
 def viscosity_log(loggammap,tki,A,C,n):
     return np.log(A) + C*tki + (n-1)*loggammap
 
-def f_visco(p,loggammap,tki,log_nstar):
-    A=p[0]
-    C=p[1]
-    n=p[2]
-    lognstar_model = viscosity_log(loggammap,tki,A,C,n)
-    diffs = lognstar_model-log_nstar
-    return diffs.flatten()
 
 def test_fit_visco():
     filename=os.path.join('testdata','Rheology_M-870-6_Batch_31.csv')
     df = pd.read_csv(filename)
-    pset = fit_visco(df)
+    pset = call_fit_visco(df)
     
     ref={'A': 835.9979707299541, 'C': 1666.8287301629769, 'n': 0.2841424416704478, 'pp': 1, 'lower T[C]': 80, 'upper T[C]': 140}
     assert pset==ref, 'test_fit_visco not matching'
@@ -205,6 +181,6 @@ if __name__=='__main__':
     df,ref=test_fit_visco()
     dfsamp=resample(df,num=20)
     print(dfsamp.to_json())
-    rd = call_fit(dfsamp)
+    rd = call_fit_visco(dfsamp)
     
     print(rd)

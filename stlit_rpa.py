@@ -4,20 +4,58 @@ import numpy as np
 
 import rpa_uti as ru
 import json
+import os
 from io import BytesIO
 from io import StringIO
 import uuid
+import yaml
 
-st.title('RPA Viscosity Measurements')
+
+def get_config():
+
+    try:
+        ddconfig=dict()
+        drive=os.environ.get('HOMEDRIVE','')
+        home = os.environ.get('HOMEPATH','.')
+        if drive :
+            home = os.path.join(drive,home)
+        rpa_global = os.environ.get('RPAPATH',home)
+        filename = 'config.yaml'
+        #search locations
+        search = [rpa_global,home,os.path.join(home,'.rpakey'), os.path.join('.','.rpakey'),'.']
+        for loc in search:
+            testconfigfile =  os.path.join(loc,filename)
+            if os.path.exists(testconfigfile):
+                configfile = testconfigfile
+                with open(configfile,'r') as fy:
+                    dconf = yaml.safe_load(fy)
+                ddconfig.update(dconf)
+    except:
+        print('use Defaults')
+        ddconfig =dict(lower_temp=75.,upper_temp=135.)
+
+    apikey = os.environ.get('RPAKEY',ddconfig.get('apikey',''))
+    ddconfig['apikey']=apikey
+    return ddconfig
+
+
 
 
 def upload_data(uploaded_file):
     dataframe = pd.read_csv(uploaded_file)
     return dataframe
+
+config = get_config()
+
+st.title('RPA Viscosity Measurements')
+
     
-    
-upper_temp=130.
-lower_temp=80.
+upper_temp=float(config.get('upper_temp',140.))
+lower_temp=float(config.get('lower_temp',80.))
+apikey = config.get('apikey','')
+if not apikey:
+    print('No ApiKey found: No identification will be done')
+    print(' For Access contact: ...')
 
 uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]")
 if uploaded_file is not None:
@@ -43,7 +81,7 @@ if uploaded_file is not None:
     if filename.endswith('.csv'):
         dataframe = pd.read_csv(uploaded_file)
         #dataframe = upload_data(uploaded_file)
-    df = ru.resample(dataframe,num=200)
+    df = ru.resample(dataframe,num=config.get('samples',120))
     if st.checkbox('Show raw data'):
         st.subheader('Raw data')
         st.write(dataframe)
@@ -69,7 +107,7 @@ if uploaded_file is not None:
 
     # call to api 
     #model = ru.fit_visco(dataframe,lower_t,upper_t)
-    model = ru.call_fit(dataframe,lower_t,upper_t)
+    model = ru.call_fit_visco(dataframe,lower_t,upper_t,apikey=apikey)
     
     if st.checkbox('Show Plot (slows down!)'):
         st.subheader('Plot Data')
