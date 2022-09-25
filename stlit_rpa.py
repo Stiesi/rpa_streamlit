@@ -54,8 +54,8 @@ upper_temp=float(config.get('upper_temp',140.))
 lower_temp=float(config.get('lower_temp',80.))
 apikey = config.get('apikey','')
 if not apikey:
-    print('No ApiKey found: No identification will be done')
-    print(' For Access contact: ...')
+    st.write('No ApiKey found: No identification will be done')
+    st.write(' For Access contact: ...')
 
 uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]")
 if uploaded_file is not None:
