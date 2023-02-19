@@ -40,6 +40,53 @@ def get_config():
     ddconfig['apikey']=apikey
     return ddconfig
 
+def data_fromfileupload(uploaded_file):
+    if uploaded_file is not None:
+        filename = uploaded_file.name
+        # To read file as bytes:
+        if filename.endswith('.zip'):
+            bytes_data = uploaded_file.getvalue()
+            #st.write(bytes_data)
+            with zipfile.ZipFile(BytesIO(bytes_data),'r') as zf:
+                print(zf.namelist())
+                for file in zf.namelist():
+                    print(file)
+                    try:
+                        base,ext=os.path.splitext(file)
+                        if ext.lower()=='.html':
+                            string = zf.read(file).decode("utf-8")
+                            stringio =  StringIO(string)
+
+                            dataframe = ru.html2df(string)
+                    except:
+                        dataframe = pd.DataFrame([])
+                        print('Error extracting')
+            
+
+        # To convert to a string based IO:
+        if filename.endswith('.htmlx'):
+            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+            #st.write(stringio)
+            
+            dataframe = ru.html2df(stringio)
+        
+
+        # To read file as string:
+        if filename.endswith('.html'):
+            print('hi')
+            
+            string_data = uploaded_file.getvalue().decode("utf-8")
+            #string_data = uploaded_file.read()
+            #st.write(string_data)
+            dataframe = ru.html2df(string_data)
+        
+        # Can be used wherever a "file-like" object is accepted:
+        if filename.endswith('.csv'):
+            dataframe = pd.read_csv(uploaded_file)
+            #dataframe = upload_data(uploaded_file)
+        return dataframe
+    else:
+        return None
 
 
 @st.cache_data
@@ -60,52 +107,16 @@ if not apikey:
     st.write('No ApiKey found: No identification will be done')
     st.write(' For Access contact: ...')
 
-uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]")
-if uploaded_file is not None:
-    filename = uploaded_file.name
-    # To read file as bytes:
-    if filename.endswith('.zip'):
-        bytes_data = uploaded_file.getvalue()
-        #st.write(bytes_data)
-        with zipfile.ZipFile(BytesIO(bytes_data),'r') as zf:
-            print(zf.namelist())
-            for file in zf.namelist():
-                print(file)
-                try:
-                    base,ext=os.path.splitext(file)
-                    if ext.lower()=='.html':
-                        string = zf.read(file).decode("utf-8")
-                        stringio =  StringIO(string)
+else:
+    uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]")
 
-                        dataframe = ru.html2df(string)
-                except:
-                    dataframe = pd.DataFrame([])
-                    print('Error extracting')
-        
-
-    # To convert to a string based IO:
-    if filename.endswith('.htmlx'):
-        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-        #st.write(stringio)
-        
-        dataframe = ru.html2df(stringio)
-    
-
-    # To read file as string:
-    if filename.endswith('.html'):
-        print('hi')
-        
-        string_data = uploaded_file.getvalue().decode("utf-8")
-        #string_data = uploaded_file.read()
-        #st.write(string_data)
-        dataframe = ru.html2df(string_data)
-    
-    # Can be used wherever a "file-like" object is accepted:
-    if filename.endswith('.csv'):
-        dataframe = pd.read_csv(uploaded_file)
-        #dataframe = upload_data(uploaded_file)
 
     #dataframe = pd.DataFrame([])
+    try:
+        dataframe = data_fromfileupload(uploaded_file)
+    except:
+        st.write('Cannot read dataframes from file')
+        st.stop()
 
     df = ru.resample(dataframe,num=config.get('samples',120))
     if st.checkbox('Show raw data'):
