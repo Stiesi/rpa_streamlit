@@ -22,7 +22,7 @@ def get_config():
         if drive :
             home = os.path.join(drive,home)
         rpa_global = os.environ.get('RPAPATH',home)
-        filename = 'config.yaml'
+        filename = '_config.yaml'
         #search locations
         search = [rpa_global,home,os.path.join(home,'.rpakey'), os.path.join('.','.rpakey'),'.']
         for loc in search:
