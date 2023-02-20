@@ -108,17 +108,18 @@ if not apikey:
     st.write(' For Access contact: ...')
 
 else:
-    uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]")
-
+    uploaded_file=None
+    while uploaded_file is None:
+        uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]",key='upload_widget')
 
     #dataframe = pd.DataFrame([])
     try:
         dataframe = data_fromfileupload(uploaded_file)
+        df = ru.resample(dataframe,num=config.get('samples',120))
     except:
         st.write('Cannot read dataframes from file')
         st.stop()
 
-    df = ru.resample(dataframe,num=config.get('samples',120))
     if st.checkbox('Show raw data'):
         st.subheader('Raw data')
         st.write(dataframe)
