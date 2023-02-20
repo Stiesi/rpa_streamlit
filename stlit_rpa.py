@@ -11,10 +11,29 @@ import uuid
 import yaml
 import zipfile
 
+# from https://github.com/jkanner/streamlit-dataview/blob/master/app.py
+#
+# Use the non-interactive Agg backend, which is recommended as a
+# thread-safe backend.
+# See https://matplotlib.org/3.3.2/faq/howto_faq.html#working-with-threads.
+import matplotlib as mpl
+mpl.use("agg")
+
+##############################################################################
+# Workaround for the limited multi-threading support in matplotlib.
+# Per the docs, we will avoid using `matplotlib.pyplot` for figures:
+# https://matplotlib.org/3.3.2/faq/howto_faq.html#how-to-use-matplotlib-in-a-web-application-server.
+# Moreover, we will guard all operations on the figure instances by the
+# class-level lock in the Agg backend.
+##############################################################################
+from matplotlib.backends.backend_agg import RendererAgg
+_lock = RendererAgg.lock
+
+
 st.set_page_config(
    page_title="RPA App",
    page_icon="🧊",
-   layout="wide",
+   #layout="wide",
    initial_sidebar_state="expanded",
 )
 
@@ -101,6 +120,7 @@ def upload_data(uploaded_file):
     dataframe = pd.read_csv(uploaded_file)
     return dataframe
 
+
 config = get_config()
 
 st.title('RPA Viscosity Measurements')
@@ -115,62 +135,68 @@ if not apikey:
 
 else:
     uploaded_file=None
-    while uploaded_file is None:
-        uploaded_file = st.file_uploader("Choose a file [.html, .zip(html), .csv]",key='upload_widget')
+    #while uploaded_file is None:
+    uploaded_file = st.sidebar.file_uploader("Choose a file [.html, .zip(html), .csv]",key='upload_widget')
+    with uploaded_file:
+        #dataframe = pd.DataFrame([])
+        try:
+            dataframe = data_fromfileupload(uploaded_file)
+            df = ru.resample(dataframe,num=config.get('samples',120))
+        except:
+            st.write('Cannot read dataframes from file')
+            st.stop()
 
-    #dataframe = pd.DataFrame([])
-    try:
-        dataframe = data_fromfileupload(uploaded_file)
-        df = ru.resample(dataframe,num=config.get('samples',120))
-    except:
-        st.write('Cannot read dataframes from file')
-        st.stop()
+        if st.checkbox('Show raw data'):
+            st.subheader('Raw data')
+            st.write(dataframe)
 
-    if st.checkbox('Show raw data'):
-        st.subheader('Raw data')
-        st.write(dataframe)
+        st.sidebar.subheader('Set Temperature Limits for Model')
+        #with st.expander(f'use only data from Temperatures in this range'):
+        # Some number in the range 0-23
+        #lower_temp = st.slider('lower', float(dataframe.tempc.min()),float(upper_temp) , lower_temp)
+        #upper_t=upper_temp
+        with st.sidebar.form(key='set_limits'):
+            col1,col2 = st.columns((1,1))
+            with col1:
+                lower_t = st.number_input('Lower Limit',value=lower_temp,
+                            min_value=dataframe.tempc.min(),
+                            max_value=dataframe.tempc.max(),step=1.,format='%.1f')
+            #col1.write('The current number is ', lower_t)  
+            with col2:
+                upper_t = st.number_input('Upper Limit',value=upper_temp,
+                                max_value=dataframe.tempc.max(),
+                                min_value=lower_t,step=1.,format='%.1f')                      
+            st.form_submit_button('start analysis')
+        #col2.write('The current number is ', upper_t)  
+        lower_temp = lower_t
+        upper_temp = upper_t
 
-    st.subheader('Set Temperature Limits for Model')
-    #with st.expander(f'use only data from Temperatures in this range'):
-    # Some number in the range 0-23
-    #lower_temp = st.slider('lower', float(dataframe.tempc.min()),float(upper_temp) , lower_temp)
-    #upper_t=upper_temp
-    with st.form(key='set_limits'):
-        col1,col2 = st.columns((1,1))
-        with col1:
-            lower_t = st.number_input('Lower Limit',value=lower_temp,
-                        min_value=dataframe.tempc.min(),
-                        max_value=dataframe.tempc.max(),step=1.,format='%.1f')
-        #col1.write('The current number is ', lower_t)  
-        with col2:
-            upper_t = st.number_input('Upper Limit',value=upper_temp,
-                            max_value=dataframe.tempc.max(),
-                            min_value=lower_t,step=1.,format='%.1f')                      
-        st.form_submit_button('start analysis')
-    #col2.write('The current number is ', upper_t)  
-    lower_temp = lower_t
-    upper_temp = upper_t
+        # no function
+        #tl,tu = st.slider('Temperature Limits for Fitting', value=[lower_t,upper_t],step=1. )
+        #st.subheader('Data Measured and Filtered')
 
-    # no function
-    #tl,tu = st.slider('Temperature Limits for Fitting', value=[lower_t,upper_t],step=1. )
-    #st.subheader('Data Measured and Filtered')
-
-    # call to api 
-    #model = ru.fit_visco(dataframe,lower_t,upper_t)
-    with st.spinner('run fitting...'):
-        model = ru.call_fit_visco(dataframe,lower_t,upper_t,apikey=apikey)
-    
-    if st.checkbox('Show Plot (slows down!)'):
-        st.subheader('Plot Data')
-        fig = ru.plot_mpl(df,lower_t,upper_t,model)
-        #st.plotly_chart(fig,use_container_width=True)
-        st.pyplot(fig)
-    st.write(model)
-    with open('model.txt','w') as fo:
-        modelstr=json.dumps(model)
-        fo.write(modelstr)
-    
-    st.download_button('Download Model Values', modelstr)
+        # call to api 
+        #model = ru.fit_visco(dataframe,lower_t,upper_t)
+        with st.spinner('run fitting...'):
+            model = ru.call_fit_visco(dataframe,lower_t,upper_t,apikey=apikey)
+        
+        if st.checkbox('Show Plot (slows down!)'):
+            st.subheader('Plot Data')
+            with _lock:                
+                plotfilename,ext = os.path.splitext(uploaded_file.name)
+                fig = ru.plot_mpl(df,lower_t,upper_t,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
+            #st.plotly_chart(fig,use_container_width=True)
+                st.pyplot(fig)
+                with open('nstar.png','rb') as fpict:
+                    bpicstr = fpict.read()
+                st.download_button('Download Picture',bpicstr,file_name=f'{plotfilename}.png')
+        st.sidebar.subheader('model parameters')
+        st.sidebar.write(model)
+        with open('model.txt','w') as fo:
+            modelstr=json.dumps(model)
+            fo.write(modelstr)
+        
+        st.sidebar.download_button('Download Model Values', modelstr)
 
 
     
