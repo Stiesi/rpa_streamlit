@@ -11,6 +11,13 @@ import uuid
 import yaml
 import zipfile
 
+st.set_page_config(
+   page_title="RPA App",
+   page_icon="🧊",
+   layout="wide",
+   initial_sidebar_state="expanded",
+)
+
 
 
 def get_config():
@@ -97,7 +104,6 @@ def upload_data(uploaded_file):
 config = get_config()
 
 st.title('RPA Viscosity Measurements')
-
 
 upper_temp=float(config.get('upper_temp',140.))
 lower_temp=float(config.get('lower_temp',80.))
