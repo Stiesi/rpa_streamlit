@@ -159,15 +159,15 @@ st.sidebar.subheader('Set Temperature Limits for Model')
 #with st.sidebar.form(key='set_limits'):
 col1,col2 = st.sidebar.columns((1,1))
 with col1:
-    lower_t = st.number_input('Lower Limit',value=lower_temp,
+    lower_temp = st.number_input('Lower Limit',value=lower_temp,
                 min_value=dataframe.tempc.min(),
                 max_value=dataframe.tempc.max(),step=1.,format='%.1f',
                 key='lowert')
 #col1.write('The current number is ', lower_t)  
 with col2:
-    upper_t = st.number_input('Upper Limit',value=upper_temp,
+    upper_temp = st.number_input('Upper Limit',value=upper_temp,
                     max_value=dataframe.tempc.max(),
-                    min_value=lower_t,step=1.,format='%.1f',
+                    min_value=lower_temp,step=1.,format='%.1f',
                     key='uppert')  
     #st.form_submit_button('start analysis')
 #col2.write('The current number is ', upper_t)  
@@ -181,12 +181,12 @@ with col2:
 # call to api 
 #model = ru.fit_visco(dataframe,lower_t,upper_t)
 with st.spinner('run fitting...'):
-    model = ru.call_fit_visco(dataframe,lower_t,upper_t,apikey=apikey)
+    model = ru.call_fit_visco(dataframe,lower_temp,upper_temp,apikey=apikey)
 
 #st.subheader('Plot Data')
 with _lock:                
     plotfilename,ext = os.path.splitext(uploaded_file.name)
-    fig = ru.plot_mpl(df,lower_t,upper_t,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
+    fig = ru.plot_mpl(df,lower_temp,upper_temp,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
 #st.plotly_chart(fig,use_container_width=True)
     st.pyplot(fig)
     with open(f'{plotfilename}.png','rb') as fpict:
