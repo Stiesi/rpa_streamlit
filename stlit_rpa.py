@@ -187,7 +187,7 @@ else:
                 fig = ru.plot_mpl(df,lower_t,upper_t,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
             #st.plotly_chart(fig,use_container_width=True)
                 st.pyplot(fig)
-                with open('nstar.png','rb') as fpict:
+                with open(f'{plotfilename}.png','rb') as fpict:
                     bpicstr = fpict.read()
                 st.download_button('Download Picture',bpicstr,file_name=f'{plotfilename}.png')
         st.sidebar.subheader('model parameters')
