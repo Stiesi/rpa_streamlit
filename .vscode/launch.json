@@ -1,5 +1,6 @@
 {
     "configurations": [
+
     
         {
             "name": "Python: FastAPI",
@@ -13,7 +14,7 @@
             "justMyCode": true
         },
         {
-            "name": "Python: File",
+            "name": "Python: Streamlit",
             "type": "python",
             "request": "launch",
             "module": "streamlit",
