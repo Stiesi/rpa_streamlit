@@ -128,6 +128,7 @@ st.title('RPA Viscosity Measurements')
 upper_temp=float(config.get('upper_temp',140.))
 lower_temp=float(config.get('lower_temp',80.))
 
+
 apikey = config.get('apikey','')
 if not apikey:
     st.write('No ApiKey found: No identification will be done')
@@ -155,21 +156,23 @@ st.sidebar.subheader('Set Temperature Limits for Model')
 # Some number in the range 0-23
 #lower_temp = st.slider('lower', float(dataframe.tempc.min()),float(upper_temp) , lower_temp)
 #upper_t=upper_temp
-with st.sidebar.form(key='set_limits'):
-    col1,col2 = st.columns((1,1))
-    with col1:
-        lower_t = st.number_input('Lower Limit',value=lower_temp,
-                    min_value=dataframe.tempc.min(),
-                    max_value=dataframe.tempc.max(),step=1.,format='%.1f')
-    #col1.write('The current number is ', lower_t)  
-    with col2:
-        upper_t = st.number_input('Upper Limit',value=upper_temp,
-                        max_value=dataframe.tempc.max(),
-                        min_value=lower_t,step=1.,format='%.1f')                      
-    st.form_submit_button('start analysis')
+#with st.sidebar.form(key='set_limits'):
+col1,col2 = st.sidebar.columns((1,1))
+with col1:
+    lower_t = st.number_input('Lower Limit',value=lower_temp,
+                min_value=dataframe.tempc.min(),
+                max_value=dataframe.tempc.max(),step=1.,format='%.1f',
+                key='lowert')
+#col1.write('The current number is ', lower_t)  
+with col2:
+    upper_t = st.number_input('Upper Limit',value=upper_temp,
+                    max_value=dataframe.tempc.max(),
+                    min_value=lower_t,step=1.,format='%.1f',
+                    key='uppert')  
+    #st.form_submit_button('start analysis')
 #col2.write('The current number is ', upper_t)  
-lower_temp = lower_t
-upper_temp = upper_t
+#lower_temp = lower_t
+#upper_temp = upper_t
 
 # no function
 #tl,tu = st.slider('Temperature Limits for Fitting', value=[lower_t,upper_t],step=1. )
@@ -180,16 +183,15 @@ upper_temp = upper_t
 with st.spinner('run fitting...'):
     model = ru.call_fit_visco(dataframe,lower_t,upper_t,apikey=apikey)
 
-if st.checkbox('Show Plot (slows down!)'):
-    st.subheader('Plot Data')
-    with _lock:                
-        plotfilename,ext = os.path.splitext(uploaded_file.name)
-        fig = ru.plot_mpl(df,lower_t,upper_t,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
-    #st.plotly_chart(fig,use_container_width=True)
-        st.pyplot(fig)
-        with open(f'{plotfilename}.png','rb') as fpict:
-            bpicstr = fpict.read()
-        st.download_button('Download Picture',bpicstr,file_name=f'{plotfilename}.png')
+#st.subheader('Plot Data')
+with _lock:                
+    plotfilename,ext = os.path.splitext(uploaded_file.name)
+    fig = ru.plot_mpl(df,lower_t,upper_t,model,title=f'Fitting RPA Data for Viscous Model',filename = plotfilename)
+#st.plotly_chart(fig,use_container_width=True)
+    st.pyplot(fig)
+    with open(f'{plotfilename}.png','rb') as fpict:
+        bpicstr = fpict.read()
+    st.download_button('Download Picture',bpicstr,file_name=f'{plotfilename}.png')
 st.sidebar.subheader('model parameters')
 st.sidebar.write(model)
 with open('model.txt','w') as fo:
