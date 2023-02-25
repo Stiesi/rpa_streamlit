@@ -144,7 +144,7 @@ try:
     dataframe = data_fromfileupload(uploaded_file)
     df = ru.resample(dataframe,num=config.get('samples',120))
 except:
-    st.write('Cannot read dataframes from file')
+    st.write('no dataframes read from file')
     st.stop()
 
 if st.checkbox('Show raw data'):
