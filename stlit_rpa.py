@@ -167,8 +167,10 @@ with col1:
 with col2:
     upper_temp = st.number_input('Upper Limit',value=upper_temp,
                     max_value=dataframe.tempc.max(),
-                    min_value=lower_temp,step=1.,format='%.1f',
+                    min_value=dataframe.tempc.min(),step=1.,format='%.1f',
                     key='uppert')  
+if upper_temp <= lower_temp:
+    upper_temp = lower_temp+2    
     #st.form_submit_button('start analysis')
 #col2.write('The current number is ', upper_t)  
 #lower_temp = lower_t
