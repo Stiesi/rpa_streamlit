@@ -1,3 +1,4 @@
+import streamlit as st
 import json
 import os
 import re
@@ -89,7 +90,7 @@ def html2df(txt):
     df = stack_rpa_data(headers,tables,comps)
     return df
     
-
+@st.cache_data
 def stack_rpa_data(headers,tables,comps,
                    gammarates=[1.25,2.5,5,10],
                    heatrates=[5,10,20,30],
@@ -172,7 +173,7 @@ def stack_rpa_data(headers,tables,comps,
     df = df.round({'nstar':1,'gammap':2,'tempc':2,'sdash':3,'time':2})
     return df
 
-
+@st.cache_data
 def plot(df,lowert,uppert,para,title='RPA',filename='nstar'):
     A=para['A']
     C=para['C']
@@ -203,6 +204,7 @@ def plot(df,lowert,uppert,para,title='RPA',filename='nstar'):
     fig.savefig(filename+'.png')
     return fig
 
+@st.cache_data
 def plot_mpl(df,lowert,uppert,para,title='RPA Test and Model for Viscous Properties',
              filename='nstar'):
     A=para['A']
@@ -251,6 +253,7 @@ def plot_mpl(df,lowert,uppert,para,title='RPA Test and Model for Viscous Propert
     fig.savefig(figname)
     return fig
         
+@st.cache_data
 def synchronize(sdash,nstar,temp,testid=1,trigger=0):
     # create a data array with [time_s,S',n*,TKinv,gammarate]
     # 
@@ -292,7 +295,7 @@ def synchronize(sdash,nstar,temp,testid=1,trigger=0):
     dataset =np.vstack((time,sda,nda,tempc,trate,testnr))
     return dataset.reshape(6,-1).T
 
-    
+@st.cache_data    
 def call_fit_visco(df,lowert=80,uppert=140,apikey=''):
 
     
