@@ -10,6 +10,9 @@ from io import StringIO
 import uuid
 import yaml
 import zipfile
+import datetime
+
+from  deta import Deta
 
 # from https://github.com/jkanner/streamlit-dataview/blob/master/app.py
 #
@@ -28,6 +31,10 @@ mpl.use("agg")
 ##############################################################################
 from matplotlib.backends.backend_agg import RendererAgg
 _lock = RendererAgg.lock
+
+deta = Deta(st.secrets["data_key"])
+
+db = deta.Base("model-db")
 
 
 st.set_page_config(
@@ -200,7 +207,15 @@ with open('model.txt','w') as fo:
     modelstr=json.dumps(model)
     fo.write(modelstr)
 
-st.sidebar.download_button('Download Model Values', modelstr)
+download = st.sidebar.download_button('Download Model Values', modelstr)
+if download:
+    #pass
+    #st.write(model)
+    now = datetime.datetime.now().strftime("%Y%m%d_%H%M_%S")
+    #print(now)
+    dataset = dict(time=now) 
+    dataset.update(model)
+    db.put(dataset)
 
 
     
