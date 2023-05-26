@@ -7,26 +7,6 @@ Explore
 @Stiesi
 Stiesi /
 rpa_streamlit
-Public
-
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-
-    Settings
-
-rpa_streamlit/.gitignore
-@Stiesi
-Stiesi Initial commit
-Latest commit c6a97ff 2 hours ago
-History
-1 contributor
-129 lines (105 sloc) 1.76 KB
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -132,7 +112,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.venv/
 env/
 venv/
 ENV/
@@ -156,21 +136,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-Footer
-� 2022 GitHub, Inc.
-Footer navigation
-
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
-You have no unread notifications
 Rheology_M-870-6_Batch_31.png
+# database keys
+.streamlit/secrets.toml

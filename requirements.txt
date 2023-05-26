@@ -3,3 +3,4 @@ pyyaml
 numpy
 pandas
 matplotlib
+deta
