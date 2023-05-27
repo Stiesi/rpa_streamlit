@@ -70,6 +70,11 @@ def get_config():
         ddconfig =dict(lower_temp=75.,upper_temp=135.)
 
     apikey = os.environ.get('RPAKEY',ddconfig.get('apikey',''))
+    if apikey=='':
+        try:
+            apikey = st.secrets["RPAKEY"]
+        except:
+            st.write("No Key")
     ddconfig['apikey']=apikey
     return ddconfig
 
