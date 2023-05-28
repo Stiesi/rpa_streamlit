@@ -222,7 +222,7 @@ if download:
     #st.write(model)
     now = datetime.datetime.now().strftime("%Y%m%d_%H%M_%S")
     #print(now)
-    dataset = dict(time=now) 
+    dataset = dict(time=now,name=plotfilename) 
     dataset.update(model)
     if dev_flag==1:
         dataset['dev_flag']=dev_flag
