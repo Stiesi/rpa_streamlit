@@ -33,6 +33,10 @@ from matplotlib.backends.backend_agg import RendererAgg
 _lock = RendererAgg.lock
 
 deta = Deta(st.secrets["data_key"])
+try:
+    dev_flag = st.secrets['dev_flag']
+except:
+    dev_flag = 0 # production
 
 db = deta.Base("model-db")
 
@@ -220,7 +224,10 @@ if download:
     #print(now)
     dataset = dict(time=now) 
     dataset.update(model)
-    db.put(dataset)
+    if dev_flag==1:
+        dataset['dev_flag']=dev_flag
+    ok = db.put(dataset)
+    pass
 
 
     
